@@ -44,5 +44,27 @@ public class ExpenseManager {
 		return expenses;
 	}
 	
+	public String updateExpense(UUID id, Double amount, String description) {
+		Expense expense = expenses.stream().filter(e -> e.getId().equals(id)).findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("Expense not found."));
+		
+	    if (amount != null && amount <= 0) {
+	        return "Amount must be greater than zero.";
+	    }
+	    if (description != null && description.length() > 100) {
+	        return "Description is too long.";
+	    }
+
+	    if (amount != null) {
+	        expense.setAmount(amount);
+	    }
+
+	    if (description != null) {
+	        expense.setDescription(description);
+	    }
+
+	    return String.format("Expense has been updated successfully.");
+	}
+	
 
 }

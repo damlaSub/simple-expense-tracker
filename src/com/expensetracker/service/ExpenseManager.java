@@ -4,8 +4,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.expensetracker.model.Expense;
 import com.expensetracker.model.ExpenseCategory;
@@ -15,6 +17,7 @@ public class ExpenseManager {
 	private Set<Expense> expenses;
 	
 	public ExpenseManager() {
+		//LinkedHashSet keeps the order of insertion
 		this.expenses = new LinkedHashSet<>();
 	}
 	
@@ -66,5 +69,14 @@ public class ExpenseManager {
 	    return String.format("Expense has been updated successfully.");
 	}
 	
+	public double calculateMontlyTotal(int month, int year) {
+		return expenses.stream().filter(e -> e.getDate().getYear() == year && e.getDate().getMonthValue() == month)
+			.mapToDouble(Expense::getAmount)
+			.sum();
+	}
+	public Map<String, Double> calculateSumByCategory(int month, int year) {
+		return expenses.stream().filter(e -> e.getDate().getYear() == year && e.getDate().getMonthValue() == month)
+			.collect(Collectors.groupingBy(e -> e.getCategory().getName(), Collectors.summingDouble(Expense::getAmount)));
+	}
 
 }

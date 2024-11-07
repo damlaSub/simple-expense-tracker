@@ -2,7 +2,9 @@ package com.expensetracker.service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import com.expensetracker.model.Expense;
@@ -10,10 +12,10 @@ import com.expensetracker.model.ExpenseCategory;
 
 public class ExpenseManager {
 	
-	private List<Expense> expenses;
+	private Set<Expense> expenses;
 	
 	public ExpenseManager() {
-		this.expenses = new ArrayList<>();
+		this.expenses = new LinkedHashSet<>();
 	}
 	
 	public String addExpense(Double amount, ExpenseCategory category, String description) {
@@ -28,9 +30,7 @@ public class ExpenseManager {
             return "Description is too long.";
         }
         
-        LocalDate date = LocalDate.now();
-        
-        Expense expense = new Expense(amount, date, category, description);
+        Expense expense = new Expense(amount, LocalDate.now(), category, description);
         expenses.add(expense);
 
          return String.format("Expense %.02f for %s added successfully!", amount, category.getName());
@@ -40,7 +40,7 @@ public class ExpenseManager {
 		expenses.removeIf(e -> e.getId().equals(id));
 	}
 	
-	public List<Expense> getAllExpenses(){
+	public Set<Expense> getAllExpenses(){
 		return expenses;
 	}
 	

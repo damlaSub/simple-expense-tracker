@@ -1,6 +1,7 @@
 package com.expensetracker.model;
 
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.UUID;
 
 public class Expense {
@@ -58,6 +59,24 @@ public class Expense {
 		return "Expense [id=" + id + ", amount=" + amount + ", date=" + date + ", category=" + category
 				+ ", description=" + description + "]";
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Expense other = (Expense) obj;
+		return Objects.equals(id, other.id);
+	}
+	
 
 	 
 }

@@ -15,10 +15,21 @@ import com.expensetracker.model.ExpenseCategory;
 public class ExpenseManager {
 	
 	private Set<Expense> expenses;
+	private Double spendingLimit;
+	private static Double alertThresholdPercentage = 80.0;
 	
 	public ExpenseManager() {
 		//LinkedHashSet keeps the order of insertion
 		this.expenses = new LinkedHashSet<>();
+		this.spendingLimit = null;
+	}
+	
+	public void setSpendingLimit(Double limit) {
+		this.spendingLimit = limit;
+	}
+	
+	public void setAlertThresholdPercentage(Double percentage) {
+		alertThresholdPercentage = percentage;
 	}
 	
 	public String addExpense(Double amount, ExpenseCategory category, String description) {
@@ -78,5 +89,28 @@ public class ExpenseManager {
 		return expenses.stream().filter(e -> e.getDate().getYear() == year && e.getDate().getMonthValue() == month)
 			.collect(Collectors.groupingBy(e -> e.getCategory().getName(), Collectors.summingDouble(Expense::getAmount)));
 	}
+	
+	public double getTotalExpensesForCurrentMonth(LocalDate date) {
+		return expenses.stream().filter(e -> e.getDate().getYear() == date.getYear() && e.getDate().getMonthValue() == date.getMonthValue())
+			.mapToDouble(Expense::getAmount)
+			.sum();
+	}
 
+	public String checkExpenseLimit(LocalDate month) {
+		 if (spendingLimit == null) {
+	            return "Spending limit has not been set.";
+	        }
+		 
+		double totalExpenses = getTotalExpensesForCurrentMonth(month);
+        double remainingAmount = spendingLimit - totalExpenses;
+        double alertThreshold = spendingLimit * (alertThresholdPercentage / 100);
+        
+        if (totalExpenses > spendingLimit) {
+            return String.format("Warning: You have exceeded your spending limit of %.02f for this month. Total spent: %.02f", spendingLimit, totalExpenses);
+        } else if (totalExpenses >= alertThreshold) {
+            return String.format("Alert: You are approaching your spending limit of %.02f. Total spent: %.02f. You have %.02f remaining.", spendingLimit, totalExpenses, remainingAmount);
+        } else {
+            return String.format("You have %.02f remaining in your budget for the month.", remainingAmount);
+        }
+	}
 }

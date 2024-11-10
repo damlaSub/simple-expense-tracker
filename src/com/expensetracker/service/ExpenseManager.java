@@ -5,12 +5,16 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.expensetracker.model.Expense;
 import com.expensetracker.model.ExpenseCategory;
+
+import exceptions.ExpenseNotFoundException;
+import exceptions.InvalidExpenseException;
 
 public class ExpenseManager {
 	
@@ -32,16 +36,16 @@ public class ExpenseManager {
 		alertThresholdPercentage = percentage;
 	}
 	
-	public String addExpense(Double amount, ExpenseCategory category, String description) {
+	public String addExpense(Double amount, ExpenseCategory category, String description) throws InvalidExpenseException {
 		if (amount == null || amount <= 0) {
-            return "Amount must be greater than zero.";
+			throw new InvalidExpenseException("Amount must be greater than zero.");
         }
         if (category == null) {
-            return "Category is required.";
+        	throw new InvalidExpenseException("Category is required.");
         }
         
         if (description != null && description.length() > 100) { 
-            return "Description is too long.";
+        	throw new InvalidExpenseException("Description is too long.");
         }
         
         Expense expense = new Expense(amount, LocalDate.now(), category, description);
@@ -50,17 +54,20 @@ public class ExpenseManager {
          return String.format("Expense %.02f for %s added successfully!", amount, category.getName());
 	}
 	
-	public void deleteExpense(UUID id) {
-		expenses.removeIf(e -> e.getId().equals(id));
+	public void deleteExpense(UUID id) throws ExpenseNotFoundException {
+		boolean removed = expenses.removeIf(e -> e.getId().equals(id));
+        if (!removed) {
+            throw new ExpenseNotFoundException("Expense not found.");
+        }
 	}
 	
 	public Set<Expense> getAllExpenses(){
 		return expenses;
 	}
 	
-	public String updateExpense(UUID id, Double amount, String description) {
+	public String updateExpense(UUID id, Double amount, String description) throws ExpenseNotFoundException  {
 		Expense expense = expenses.stream().filter(e -> e.getId().equals(id)).findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("Expense not found."));
+				.orElseThrow(() -> new ExpenseNotFoundException("Expense not found"));
 		
 	    if (amount != null && amount <= 0) {
 	        return "Amount must be greater than zero.";

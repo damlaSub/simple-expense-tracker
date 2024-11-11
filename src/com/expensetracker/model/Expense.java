@@ -19,6 +19,14 @@ public class Expense {
 	        this.category = category;
 	        this.description = description;
 	    }
+	 
+	 public Expense(UUID id, Double amount, LocalDate date, ExpenseCategory category, String description) {
+	        this.id = id; 
+	        this.amount = amount;
+	        this.date = date;
+	        this.category = category;
+	        this.description = description;
+	    }
 
 	public UUID getId() {
 		return id;

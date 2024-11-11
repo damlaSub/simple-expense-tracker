@@ -1,23 +1,28 @@
 package com.expensetracker.service;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.expensetracker.model.Expense;
 import com.expensetracker.model.ExpenseCategory;
+import com.expensetracker.util.ExpenseCsvUtil;
 
 import exceptions.ExpenseNotFoundException;
 import exceptions.InvalidExpenseException;
 
 public class ExpenseManager {
 	
+	private static final String FILE_PATH = "expense.csv";
 	private Set<Expense> expenses;
 	private Double spendingLimit;
 	private static Double alertThresholdPercentage = 80.0;
@@ -36,7 +41,7 @@ public class ExpenseManager {
 		alertThresholdPercentage = percentage;
 	}
 	
-	public String addExpense(Double amount, ExpenseCategory category, String description) throws InvalidExpenseException {
+	public String addExpense(Double amount, ExpenseCategory category, String description) throws InvalidExpenseException, IOException {
 		if (amount == null || amount <= 0) {
 			throw new InvalidExpenseException("Amount must be greater than zero.");
         }
@@ -51,21 +56,24 @@ public class ExpenseManager {
         Expense expense = new Expense(amount, LocalDate.now(), category, description);
         expenses.add(expense);
 
+        saveExpensesToCsv();
+        
          return String.format("Expense %.02f for %s added successfully!", amount, category.getName());
 	}
 	
-	public void deleteExpense(UUID id) throws ExpenseNotFoundException {
+	public void deleteExpense(UUID id) throws ExpenseNotFoundException, IOException {
 		boolean removed = expenses.removeIf(e -> e.getId().equals(id));
         if (!removed) {
             throw new ExpenseNotFoundException("Expense not found.");
         }
+        saveExpensesToCsv(); 
 	}
 	
 	public Set<Expense> getAllExpenses(){
 		return expenses;
 	}
 	
-	public String updateExpense(UUID id, Double amount, String description) throws ExpenseNotFoundException  {
+	public String updateExpense(UUID id, Double amount, String description) throws ExpenseNotFoundException, IOException  {
 		Expense expense = expenses.stream().filter(e -> e.getId().equals(id)).findFirst()
 				.orElseThrow(() -> new ExpenseNotFoundException("Expense not found"));
 		
@@ -84,6 +92,7 @@ public class ExpenseManager {
 	        expense.setDescription(description);
 	    }
 
+	    saveExpensesToCsv();
 	    return String.format("Expense has been updated successfully.");
 	}
 	
@@ -120,4 +129,29 @@ public class ExpenseManager {
             return String.format("You have %.02f remaining in your budget for the month.", remainingAmount);
         }
 	}
+	
+	public void saveExpensesToCsv() throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Expense expense : expenses) {
+                writer.write(ExpenseCsvUtil.toCsvLine(expense));
+                writer.newLine();
+            }
+        }
+    }
+
+    // Load expenses from CSV at startup
+    public void loadExpensesFromCsv() throws IOException {
+        File file = new File(FILE_PATH);
+        if (file.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    Expense expense = ExpenseCsvUtil.fromCsvLine(line);
+                    expenses.add(expense);
+                }
+            }
+        }
+    }
+    
+	
 }
